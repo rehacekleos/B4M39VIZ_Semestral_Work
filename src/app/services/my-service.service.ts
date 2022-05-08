@@ -53,8 +53,8 @@ export class MyServiceService {
 
     for (let i = 0; i < xml_nodes.length; i++) {
       const node = xml_nodes[i]
-      const x = Math.abs(parseFloat(node.children[0].innerHTML));
-      const y = Math.abs(parseFloat(node.children[2].innerHTML));
+      const x = parseFloat(node.children[0].innerHTML)/10;
+      const y = Math.abs(parseFloat(node.children[2].innerHTML))/10;
       this.MIN_X = Math.min(this.MIN_X, x)
       this.MAX_X = Math.max(this.MAX_X, x)
       this.MIN_Y = Math.min(this.MIN_Y, y)
@@ -67,19 +67,11 @@ export class MyServiceService {
       });
     }
 
-    const new_scale_x = d3.scaleLinear().domain([this.MIN_X, this.MAX_X]).range([900, 40]);
-    const new_scale_y = d3.scaleLinear().domain([this.MIN_Y, this.MAX_Y]).range([550, 50]);
-    let max = 0
     for (let node of nodes){
-      max = Math.max(max, edges.filter(e => e.source == node.id || e.target == node.id).length)
-      node.x = new_scale_x(node.x)
-      node.y = new_scale_y(node.y)
       node.size = edges.filter(e => e.source == node.id || e.target == node.id).length
       node.departure = edges.filter(e => e.source == node.id).length
       node.arrive = edges.filter(e => e.target == node.id).length
     }
-    console.log(max)
-
     return nodes;
   }
 

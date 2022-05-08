@@ -22,12 +22,14 @@ export class AppComponent implements OnInit{
   svg: any;
   g: any;
   map: any;
+  projection: any
 
   constructor(private myService: MyServiceService) {
   }
 
 
   async ngOnInit() {
+    this.projection = d3.geoAlbers().scale(1280).translate([480, 300]);
     this.edges = await this.myService.getEdges();
     this.nodes = await this.myService.getNodes(this.edges);
     this.map = await this.myService.getUSMap();
@@ -53,7 +55,6 @@ export class AppComponent implements OnInit{
   }
 
   private async drawUSMap(){
-    const projection = d3.geoAlbers().scale(1280).translate([480, 300]);
 
     let land = topojson.merge(this.map, this.map.objects.states.geometries);
     let path = d3.geoPath();
@@ -94,10 +95,10 @@ export class AppComponent implements OnInit{
         else return "#008a46";
       })
       .attr('cx', (d: any) => {
-        return d.x;
+        return this.projection([d.x, d.y])[0];
       })
       .attr('cy', (d: any) => {
-        return d.y;
+        return this.projection([d.x, d.y])[1];
       });
   }
 
