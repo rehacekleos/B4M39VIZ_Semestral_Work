@@ -79,27 +79,56 @@ export class AppComponent implements OnInit{
   }
 
   private drawNodes(){
+    const triangle = d3.symbol()
+      .type(d3.symbolTriangle)
+      .size(60)
+    ;
     this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
+      .filter((d: any) => {return d.size >= 50 && d.size < 100})
+      .append("path")
+      .attr("d", triangle)
+      .attr("stroke", '#00309a')
+      .attr("fill", 'rgba(0,48,154,0.15)')
+      .attr("transform", (d: any) => {
+        return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
+      })
+
+    this.g.selectAll('.node')
+      .data(this.nodes)
+      .enter()
+      .filter((d: any) => {return d.size >= 100})
+      .append('rect')
+      .classed('node', true)
+      .attr("stroke", '#098300')
+      .attr("fill", 'rgba(9,131,0,0.15)')
+      .attr('width', 15)
+      .attr('height', 15)
+      .attr('x', (d: any) => {
+        return this.projection([d.x, d.y])[0];
+      })
+      .attr('y', (d: any) => {
+        return this.projection([d.x, d.y])[1];
+      });
+
+    this.g.selectAll('.node')
+      .data(this.nodes)
+      .enter()
+      .filter((d: any) => {return d.size < 50})
       .append('circle')
       .classed('node', true)
-      .attr('r', (d: any) => {
-        if (d.size < 50) return 3;
-        else if (d.size >= 50 && d.size < 150) return 6;
-        else return 9;
-      })
-      .attr('fill', (d: any) => {
-        if (d.size < 50) return "#000";
-        else if (d.size >= 50 && d.size < 150) return "rgba(0,46,123,0.97)";
-        else return "#008a46";
-      })
+      .attr('r', 3)
+      .attr("stroke", '#000')
+      .attr("fill", 'rgba(0,0,0,0.15)')
       .attr('cx', (d: any) => {
         return this.projection([d.x, d.y])[0];
       })
       .attr('cy', (d: any) => {
         return this.projection([d.x, d.y])[1];
       });
+
+
   }
 
   private zoomed(event: any) {
