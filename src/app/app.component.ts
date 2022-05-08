@@ -13,15 +13,15 @@ import {MyServiceService} from "./services/my-service.service";
 })
 export class AppComponent implements OnInit{
 
-  width = 975;
-  height = 610;
+  width = 900;
+  height = 600;
 
   nodes: GraphNode[] = []
   edges: GraphEdge[] = []
 
   svg: any;
   g: any;
-  us: any;
+  map: any;
 
   constructor(private myService: MyServiceService) {
   }
@@ -30,6 +30,7 @@ export class AppComponent implements OnInit{
   async ngOnInit() {
     this.edges = await this.myService.getEdges();
     this.nodes = await this.myService.getNodes(this.edges);
+    this.map = await this.myService.getUSMap();
 
     const zoom = d3.zoom()
       .scaleExtent([0.5, 10])
@@ -46,39 +47,37 @@ export class AppComponent implements OnInit{
     await this.drawUSMap();
     this.drawNodes();
 
+    this.edgeBundling()
+
     this.svg.call(zoom);
   }
 
-  async drawUSMap(){
-    await this.getUSMap();
+  private async drawUSMap(){
+    const projection = d3.geoAlbers().scale(1280).translate([480, 300]);
 
-    // add states
-    this.g.append("path")
-      .datum(topojson.merge(this.us, this.us.objects.lower48.geometries))
-      .attr("fill", "#ddd")
-      .attr("d", d3.geoPath());
+    let land = topojson.merge(this.map, this.map.objects.states.geometries);
+    let path = d3.geoPath();
 
-    // add states border
+    // draw base map
     this.g.append("path")
-      .datum(topojson.mesh(this.us, this.us.objects.lower48, (a, b) => a !== b))
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-linejoin", "round")
-      .attr("d", d3.geoPath());
+      .datum(land)
+      .attr("class", "land")
+      .attr("d", path);
+
+    // draw interior borders
+    this.g.append("path")
+      .datum(topojson.mesh(this.map, this.map.objects.states, (a, b) => a !== b))
+      .attr("class", "border interior")
+      .attr("d", path);
+
+    // draw exterior borders
+    this.g.append("path")
+      .datum(topojson.mesh(this.map, this.map.objects.states, (a, b) => a === b))
+      .attr("class", "border exterior")
+      .attr("d", path);
   }
 
-  async getUSMap(){
-    this.us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@1/us/10m.json");
-    console.log(this.us)
-    this.us.objects.lower48 = {
-      type: "GeometryCollection",
-      geometries: this.us.objects.states.geometries.filter((d: any) => {
-        return d.id !== "02" && d.id !== "15";
-      })
-    };
-  }
-
-  drawNodes(){
+  private drawNodes(){
     this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
@@ -102,11 +101,13 @@ export class AppComponent implements OnInit{
       });
   }
 
-  zoomed(event: any) {
+  private zoomed(event: any) {
     const {transform} = event;
     this.g.attr("transform", transform);
     this.g.attr("stroke-width", 1 / transform.k);
   }
 
+  private edgeBundling() {
 
+  }
 }

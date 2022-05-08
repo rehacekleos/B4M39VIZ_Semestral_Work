@@ -17,6 +17,17 @@ export class MyServiceService {
 
   }
 
+  async getUSMap(){
+    const us: any = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@1/us/10m.json");
+    us.objects.states.geometries = us.objects.states.geometries.filter(this.isContinental);
+    return us
+  }
+
+  private isContinental(state: any) {
+    const id = parseInt(state.id);
+    return id < 60 && id !== 2 && id !== 15;
+  }
+
   async getXmlData(){
     return await d3.xml('assets/airlines.graphml');
   }
@@ -71,4 +82,6 @@ export class MyServiceService {
 
     return nodes;
   }
+
+
 }
