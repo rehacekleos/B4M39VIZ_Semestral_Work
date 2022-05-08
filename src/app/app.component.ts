@@ -51,6 +51,8 @@ export class AppComponent implements OnInit{
 
     this.edgeBundling()
 
+    this.tooltip()
+
     this.svg.call(zoom);
   }
 
@@ -86,7 +88,9 @@ export class AppComponent implements OnInit{
     this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
-      .filter((d: any) => {return d.size >= 50 && d.size < 100})
+      .filter((d: any) => {
+        return d.size >= 50 && d.size < 100
+      })
       .append("path")
       .attr("d", triangle)
       .attr("stroke", '#00309a')
@@ -94,6 +98,9 @@ export class AppComponent implements OnInit{
       .attr("transform", (d: any) => {
         return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
       })
+      .attr("id", (d: any) => {
+        return d.id
+      });
 
     this.g.selectAll('.node')
       .data(this.nodes)
@@ -110,6 +117,9 @@ export class AppComponent implements OnInit{
       })
       .attr('y', (d: any) => {
         return this.projection([d.x, d.y])[1];
+      })
+      .attr("id", (d: any) => {
+        return d.id
       });
 
     this.g.selectAll('.node')
@@ -126,6 +136,9 @@ export class AppComponent implements OnInit{
       })
       .attr('cy', (d: any) => {
         return this.projection([d.x, d.y])[1];
+      })
+      .attr("id", (d: any) => {
+        return d.id
       });
 
 
@@ -139,5 +152,54 @@ export class AppComponent implements OnInit{
 
   private edgeBundling() {
 
+  }
+
+  private tooltip() {
+    // const polygons = d3.geoVoronoi().polygons(geojson);
+    // console.log(polygons);
+
+    const tooltipContainer = d3.select("#map")
+      .append("div")
+      .classed('tooltip', true)
+
+    tooltipContainer.append("text")
+
+    d3.selectAll(".node")
+      .data(this.nodes)
+      .on("mouseenter", (event) => {
+
+        const node = event.target
+        const nodeData = this.nodes[node.id]
+
+        const text =
+          `Code: ${nodeData.name}
+           Departures: ${nodeData.departure}
+           Arrivals: ${nodeData.arrive}`
+
+        d3.select(node)
+          .classed("highlighted", true)
+
+        tooltipContainer
+          .text(text)
+          .style("top", (event.pageY - 35) + "px")
+          .style("left", (event.pageX + 10) + "px")
+          .style("visibility", "visible")
+      })
+
+      .on("mousemove", (event) => {
+        tooltipContainer
+          .style("top", (event.pageY - 35) + "px")
+          .style("left", (event.pageX + 10) + "px")
+          .style("visibility", "visible")
+      })
+
+      .on("mouseout", (event) => {
+        const node = event.target
+
+        d3.select(node)
+          .classed("highlighted", false)
+
+        tooltipContainer.style("visibility", "hidden");
+      });
   }
 }
