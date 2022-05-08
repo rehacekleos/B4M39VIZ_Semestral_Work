@@ -22,3 +22,11 @@ body {
 .exterior {
   stroke: #bbbbbb;
 }
+
+.tooltip {
+  position: absolute;
+  text-align: left;
+  font-size: 0.8em;
+  width: 7em;
+  visibility: hidden;
+}
