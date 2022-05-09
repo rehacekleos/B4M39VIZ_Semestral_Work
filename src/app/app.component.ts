@@ -98,6 +98,7 @@ export class AppComponent implements OnInit{
       .attr("transform", (d: any) => {
         return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
       })
+      .classed("node", true)
       .attr("id", (d: any) => {
         return d.id
       });
