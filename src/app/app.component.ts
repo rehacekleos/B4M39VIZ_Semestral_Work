@@ -1,6 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
+// @ts-ignore
+import * as voronoi from 'd3-geo-voronoi';
 import {HttpClient} from "@angular/common/http";
 import {GraphNode} from "./models/node";
 import {GraphEdge} from "./models/edge";
@@ -23,6 +25,9 @@ export class AppComponent implements OnInit{
   g: any;
   map: any;
   projection: any
+  geoJson: any
+  tooltipContainer: any
+  voronoiDiagram: any
 
   constructor(private myService: MyServiceService) {
   }
@@ -50,6 +55,10 @@ export class AppComponent implements OnInit{
     this.drawNodes();
 
     this.edgeBundling()
+
+    this.mapNodesToGeoJson();
+
+    this.drawVoronoi();
 
     this.tooltip()
 
@@ -156,51 +165,76 @@ export class AppComponent implements OnInit{
   }
 
   private tooltip() {
-    // const polygons = d3.geoVoronoi().polygons(geojson);
-    // console.log(polygons);
-
-    const tooltipContainer = d3.select("#map")
+    this.tooltipContainer = d3.select("#map")
       .append("div")
-      .classed('tooltip', true)
+      .classed('tooltip', true);
 
-    tooltipContainer.append("text")
+    this.tooltipContainer.append("text");
+  }
 
-    d3.selectAll(".node")
-      .data(this.nodes)
-      .on("mouseenter", (event) => {
 
-        const node = event.target
-        const nodeData = this.nodes[node.id]
+  private mapNodesToGeoJson() {
+    this.geoJson = this.nodes.map((node) => {
+      return {
+        type: "Feature",
+        properties: node,
+        geometry: {
+          type: "Point",
+          coordinates: [node.x, node.y]
+        }
+      };
+    });
+  }
+
+  private drawVoronoi() {
+    const polygons = voronoi.geoVoronoi().polygons(this.geoJson);
+
+    this.voronoiDiagram = this.g.selectAll("path")
+      .data(polygons.features)
+      .enter()
+      .append("path")
+      .attr("d", d3.geoPath(this.projection))
+      .classed("voronoi", true)
+      .attr("fill", 'rgba(0,0,0,0)')
+      // @ts-ignore
+      .on("mouseover", (event) => {
+        const id = event.path[0].__data__.properties.site.properties.id;
+
+        const nodeData = this.nodes[id];
 
         const text =
           `Code: ${nodeData.name}
            Departures: ${nodeData.departure}
-           Arrivals: ${nodeData.arrive}`
+           Arrivals: ${nodeData.arrive}`;
 
-        d3.select(node)
-          .classed("highlighted", true)
+        d3.selectAll(".node")
+          // @ts-ignore
+          .filter(node => node.id == id)
+          .classed("highlighted", true);
 
-        tooltipContainer
+        this.tooltipContainer
           .text(text)
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
-          .style("visibility", "visible")
+          .style("visibility", "visible");
       })
-
+      // @ts-ignore
       .on("mousemove", (event) => {
-        tooltipContainer
+        this.tooltipContainer
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
           .style("visibility", "visible")
       })
-
+      // @ts-ignore
       .on("mouseout", (event) => {
-        const node = event.target
+        const id = event.path[0].__data__.properties.site.properties.id;
 
-        d3.select(node)
-          .classed("highlighted", false)
+        this.tooltipContainer.style("visibility", "hidden");
 
-        tooltipContainer.style("visibility", "hidden");
+        d3.selectAll(".node")
+          // @ts-ignore
+          .filter(node => node.id == id)
+          .classed("highlighted", false);
       });
   }
 }
