@@ -21,6 +21,8 @@ export class AppComponent implements OnInit{
   nodes: GraphNode[] = []
   edges: GraphEdge[] = []
 
+  displayVoronoi: boolean;
+
   svg: any;
   g: any;
   map: any;
@@ -199,7 +201,6 @@ export class AppComponent implements OnInit{
       // @ts-ignore
       .on("mouseover", (event) => {
         const id = event.path[0].__data__.properties.site.properties.id;
-
         const nodeData = this.nodes[id];
 
         const text =
@@ -207,16 +208,13 @@ export class AppComponent implements OnInit{
            Departures: ${nodeData.departure}
            Arrivals: ${nodeData.arrive}`;
 
-        d3.selectAll(".node")
-          // @ts-ignore
-          .filter(node => node.id == id)
-          .classed("highlighted", true);
-
         this.tooltipContainer
           .text(text)
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
           .style("visibility", "visible");
+
+        this.handleMouseOverInteraction(id, event)
       })
       // @ts-ignore
       .on("mousemove", (event) => {
@@ -228,13 +226,30 @@ export class AppComponent implements OnInit{
       // @ts-ignore
       .on("mouseout", (event) => {
         const id = event.path[0].__data__.properties.site.properties.id;
-
         this.tooltipContainer.style("visibility", "hidden");
 
-        d3.selectAll(".node")
-          // @ts-ignore
-          .filter(node => node.id == id)
-          .classed("highlighted", false);
+        this.handleMouseOverInteraction(id, event, false)
       });
+  }
+
+  private handleMouseOverInteraction(nodeId: number, event: any, mouseIn: boolean = true) {
+    const polygon = event.target
+
+    d3.selectAll(".node")
+      // @ts-ignore
+      .filter(node => node.id == nodeId)
+      .classed("highlighted", mouseIn);
+
+    if (this.displayVoronoi) {
+      d3.select(polygon)
+        .attr("fill", mouseIn ? 'rgba(9,131,0,0.5)' : 'rgba(9,131,0,0.15)')
+    }
+  }
+
+  public toggleDisplayVoronoi() {
+    this.displayVoronoi = !this.displayVoronoi;
+    this.voronoiDiagram
+      .attr("fill", this.displayVoronoi ? 'rgba(9,131,0,0.15)' : 'rgba(9,131,0,0)')
+      .attr("stroke", this.displayVoronoi ? 'rgba(9,131,0,0.5)' : 'none');
   }
 }
