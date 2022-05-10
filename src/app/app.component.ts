@@ -30,6 +30,7 @@ export class AppComponent implements OnInit{
   geoJson: any
   tooltipContainer: any
   voronoiDiagram: any
+  graphicalNodes: any = []
 
   constructor(private myService: MyServiceService) {
   }
@@ -96,7 +97,7 @@ export class AppComponent implements OnInit{
       .type(d3.symbolTriangle)
       .size(60)
     ;
-    this.g.selectAll('.node')
+    const middleNodes = this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
       .filter((d: any) => {
@@ -114,7 +115,7 @@ export class AppComponent implements OnInit{
         return d.id
       });
 
-    this.g.selectAll('.node')
+    const largeNodes = this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
       .filter((d: any) => {return d.size >= 100})
@@ -134,7 +135,7 @@ export class AppComponent implements OnInit{
         return d.id
       });
 
-    this.g.selectAll('.node')
+    const smallNodes = this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
       .filter((d: any) => {return d.size < 50})
@@ -153,7 +154,8 @@ export class AppComponent implements OnInit{
         return d.id
       });
 
-
+    this.graphicalNodes.push(smallNodes, middleNodes, largeNodes);
+    console.log(this.graphicalNodes);
   }
 
   private zoomed(event: any) {
@@ -198,8 +200,7 @@ export class AppComponent implements OnInit{
       .attr("d", d3.geoPath(this.projection))
       .classed("voronoi", true)
       .attr("fill", 'rgba(0,0,0,0)')
-      // @ts-ignore
-      .on("mouseover", (event) => {
+      .on("mouseover", (event: any) => {
         const id = event.path[0].__data__.properties.site.properties.id;
         const nodeData = this.nodes[id];
 
@@ -216,15 +217,13 @@ export class AppComponent implements OnInit{
 
         this.handleMouseOverInteraction(id, event)
       })
-      // @ts-ignore
-      .on("mousemove", (event) => {
+      .on("mousemove", (event: any) => {
         this.tooltipContainer
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
           .style("visibility", "visible")
       })
-      // @ts-ignore
-      .on("mouseout", (event) => {
+      .on("mouseout", (event: any) => {
         const id = event.path[0].__data__.properties.site.properties.id;
         this.tooltipContainer.style("visibility", "hidden");
 
@@ -235,9 +234,8 @@ export class AppComponent implements OnInit{
   private handleMouseOverInteraction(nodeId: number, event: any, mouseIn: boolean = true) {
     const polygon = event.target
 
-    d3.selectAll(".node")
-      // @ts-ignore
-      .filter(node => node.id == nodeId)
+    const node = d3.selectAll(".node")
+      .filter((node: any) => {return node.id == nodeId})
       .classed("highlighted", mouseIn);
 
     if (this.displayVoronoi) {
@@ -252,4 +250,44 @@ export class AppComponent implements OnInit{
       .attr("fill", this.displayVoronoi ? 'rgba(9,131,0,0.15)' : 'rgba(9,131,0,0)')
       .attr("stroke", this.displayVoronoi ? 'rgba(9,131,0,0.5)' : 'none');
   }
+
+  public filterAirports (min: number, max: number) {
+    this.g.selectAll(".node")
+      .classed('invisible', (d:any) => d.size > max || d.size < min);
+
+    //   this.graphicalNodes.forEach((selection: any) => {
+    //   const nodesGroup = selection._groups[0]
+    //     .forEach((nd: any) => {
+    //       console.log("nd", nd)
+    //       // const id = this.nodes[id]
+    //       // @ts-ignore
+    //       if (this.nodes[nd.id].size > max || this.nodes[nd.id].size < min){
+    //         nd.addAttribute("class", "invisible")
+    //       }
+    //     })
+    //     .attr('invisible', (d:any) => {
+    //       console.log("d", d)
+    //       return d.size > max || d.size < min
+    //     });
+    // })
+    // .forEach((selection: any) => {
+    // const nodesGroup = selection._groups[0];
+        //   nodesGroup.classed('invisible', (d:any) => d.size > max || d.size < min);
+      // }).classed('invisible', (d:any) => d.size > max || d.size < min);
+      // .each((node: any) => console.log(node))
+      // .classed('invisible', (d:any) => d.size > max || d.size < min);
+
+    // return nodesGroup.filter((d: any) => {return d.size <= max && d.size >= min})
+
+    // this.g.selectAll('.node')
+    //   .filter((d: any) => {return d.size <= max && d.size >= min})
+
+
+    console.log("hovno", min, max)
+  }
+
+  private hideAirports() {
+
+  }
+
 }
