@@ -3,13 +3,9 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 // @ts-ignore
 import * as voronoi from 'd3-geo-voronoi';
-import {HttpClient} from "@angular/common/http";
 import {GraphNode} from "./models/node";
 import {GraphEdge} from "./models/edge";
 import {MyServiceService} from "./services/my-service.service";
-import {Simulation} from "d3";
-
-declare var ForceEdgeBundling: any;
 
 @Component({
   selector: 'app-root',
@@ -53,7 +49,7 @@ export class AppComponent implements OnInit{
       voronoi:  this.svg.select("g#voronoi")
     };
 
-    this.tooltip = d3.select("text#tooltip");
+    this.tooltip = d3.select("#tooltip");
 
     this.projection = d3.geoAlbers().scale(1280).translate([480, 300]);
     this.edges = await this.myService.getEdges();
@@ -225,16 +221,18 @@ export class AppComponent implements OnInit{
 
         this.tooltip
           .html(text)
-          .style("top", (event.pageY - 35) + "px")
-          .style("left", (event.pageX + 10) + "px")
-          .style("visibility", "visible");
+          .style("display", null)
+          .style("visibility", "visible")
+          .style("top", (event.pageY - 100) + "px")
+          .style("left", (event.pageX -60) + "px")
+
 
         this.handleMouseOverInteraction(id, event)
       })
       .on("mousemove", (event: any) => {
         this.tooltip
-          .style("top", (event.pageY - 35) + "px")
-          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 100) + "px")
+          .style("left", (event.pageX - 60) + "px")
           .style("visibility", "visible")
       })
       .on("mouseout", (event: any) => {
@@ -251,6 +249,7 @@ export class AppComponent implements OnInit{
     this.g.nodes.selectAll(".node")
       .filter((node: any) => node.id == nodeId)
       .classed("highlighted", mouseIn);
+
 
     this.g.edges.selectAll(".edge")
       .filter((edge: any[]) => {
@@ -280,6 +279,13 @@ export class AppComponent implements OnInit{
     this.g.edges.selectAll(".edge")
       .classed('invisible', (edge: any) => {
         return edge[0].size > max || edge[0].size < min ||edge[edge.length-1].size > max || edge[edge.length-1].size < min
+      })
+
+    this.g.voronoi.selectAll(".voronoi")
+      .classed('invisible', (d: any) => {
+        console.log(d)
+        let node = d.properties.site.properties;
+        return node.size > max || node.size < min
       })
   }
 
