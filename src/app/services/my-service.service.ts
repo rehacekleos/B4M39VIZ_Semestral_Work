@@ -43,16 +43,20 @@ export class MyServiceService {
     const xml_edges = xml.documentElement.getElementsByTagName('edge');
     for (let i = 0; i < xml_edges.length; i++) {
       const edge = xml_edges[i]
-      edges.push({
-        source: edge.getAttribute('source'),
-        target: edge.getAttribute('target')
-      })
+      const source = edge.getAttribute('source')
+      const target = edge.getAttribute('target')
+      if (!edges.includes({source: source, target: target})) {
+        edges.push({
+          source: source,
+          target: target
+        })
+      }
     }
     return edges;
   }
 
   async getNodes(edges: GraphEdge[]){
-    const nodes: GraphNode[] = []
+    let nodes: GraphNode[] = []
     const xml = await this.getXmlData();
     const xml_nodes = xml.documentElement.getElementsByTagName('node');
 
@@ -68,17 +72,19 @@ export class MyServiceService {
         id: node.getAttribute('id'),
         x: x,
         y: y,
+        size: 0,
         name: node.children[1].innerHTML.split('(')[0].trim()
       });
     }
 
-    let max_size = 0
     for (let node of nodes){
       node.size = edges.filter(e => e.source == node.id || e.target == node.id).length
       node.departure = edges.filter(e => e.source == node.id).length
       node.arrive = edges.filter(e => e.target == node.id).length
     }
-    console.log(max_size)
+
+    nodes = nodes.filter( node => node.size > 0);
+
     return nodes;
   }
 

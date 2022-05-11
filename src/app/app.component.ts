@@ -42,34 +42,40 @@ export class AppComponent implements OnInit{
 
 
   async ngOnInit() {
+    this.svg = d3.select('svg')
+      .attr("viewBox", [0, 0, this.width, this.height])
+      .attr("cursor", "pointer")
+
+    this.g = {
+      basemap:  this.svg.select("g#basemap"),
+      edges:  this.svg.select("g#edges"),
+      nodes: this.svg.select("g#nodes"),
+      voronoi:  this.svg.select("g#voronoi")
+    };
+
     this.projection = d3.geoAlbers().scale(1280).translate([480, 300]);
     this.edges = await this.myService.getEdges();
     this.nodes = await this.myService.getNodes(this.edges);
+    this.edges = this.edges.filter(edge => this.nodes.findIndex(n => n.id == edge.source || n.id == edge.target) !== -1)
     this.map = await this.myService.getUSMap();
 
     const zoom = d3.zoom()
       .scaleExtent([0.5, 10])
       .on("zoom", this.zoomed.bind(this));
 
-    this.svg = d3.select('#map')
-      .append('svg')
-      .attr("viewBox", [0, 0, this.width, this.height])
-      .attr("cursor", "pointer")
-
-    this.g = this.svg.append("g");
-    this.g.attr('transform', 'translate(20, 20)')
+    this.g.basemap.attr('transform', 'translate(20, 20)')
+    this.g.nodes.attr('transform', 'translate(20, 20)')
+    this.g.edges.attr('transform', 'translate(20, 20)')
+    this.g.voronoi.attr('transform', 'translate(20, 20)')
 
     await this.drawUSMap();
 
     this.drawNodes();
     this.drawEdges();
 
-
     this.mapNodesToGeoJson();
-
     this.drawVoronoi();
 
-    this.tooltip()
 
     this.svg.call(zoom);
   }
@@ -80,19 +86,19 @@ export class AppComponent implements OnInit{
     let path = d3.geoPath();
 
     // draw base map
-    this.g.append("path")
+    this.g.basemap.append("path")
       .datum(land)
       .attr("class", "land")
       .attr("d", path);
 
     // draw interior borders
-    this.g.append("path")
+    this.g.basemap.append("path")
       .datum(topojson.mesh(this.map, this.map.objects.states, (a, b) => a !== b))
       .attr("class", "border interior")
       .attr("d", path);
 
     // draw exterior borders
-    this.g.append("path")
+    this.g.basemap.append("path")
       .datum(topojson.mesh(this.map, this.map.objects.states, (a, b) => a === b))
       .attr("class", "border exterior")
       .attr("d", path);
@@ -101,58 +107,63 @@ export class AppComponent implements OnInit{
   private drawNodes() {
     const triangle = d3.symbol()
       .type(d3.symbolTriangle)
-      .size(60)
-    ;
-    const middleNodes = this.g.selectAll('.node')
-      .data(this.nodes)
-      .enter()
-      .filter((d: any) => {
-        return d.size >= 50 && d.size < 100
-      })
-      .append("path")
-      .attr("d", triangle)
-      .attr("stroke", '#00309a')
-      .attr("fill", 'rgba(0,48,154,0.15)')
-      .attr("transform", (d: any) => {
-        return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
-      })
-      .classed("node", true)
-      .attr("id", (d: any) => {
-        return d.id
-      });
+      .size(60);
 
-    const largeNodes = this.g.selectAll('.node')
-      .data(this.nodes)
-      .enter()
-      .filter((d: any) => {
-        return d.size >= 100
-      })
-      .append('rect')
-      .classed('node', true)
-      .attr("stroke", '#098300')
-      .attr("fill", 'rgba(9,131,0,0.15)')
-      .attr('width', 15)
-      .attr('height', 15)
-      .attr('x', (d: any) => {
-        return this.projection([d.x, d.y])[0]-7;
-      })
-      .attr('y', (d: any) => {
-        return this.projection([d.x, d.y])[1]-7;
-      })
-      .attr("id", (d: any) => {
-        return d.id
-      });
+    // const middleNodes = this.g.nodes.selectAll('.node')
+    //   .data(this.nodes)
+    //   .enter()
+    //   .filter((d: any) => {
+    //     return d.size >= 50 && d.size < 100
+    //   })
+    //   .append("path")
+    //   .attr("d", triangle)
+    //   .attr("stroke", '#00309a')
+    //   .attr("fill", 'rgba(0,48,154,0.15)')
+    //   .attr("transform", (d: any) => {
+    //     return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
+    //   })
+    //   .classed("node", true)
+    //   .attr("id", (d: any) => {
+    //     return d.id
+    //   });
+    //
+    // const largeNodes = this.g.nodes.selectAll('.node')
+    //   .data(this.nodes)
+    //   .enter()
+    //   .filter((d: any) => {
+    //     return d.size >= 100
+    //   })
+    //   .append('rect')
+    //   .classed('node', true)
+    //   .attr("stroke", '#098300')
+    //   .attr("fill", 'rgba(9,131,0,0.15)')
+    //   .attr('width', 15)
+    //   .attr('height', 15)
+    //   .attr('x', (d: any) => {
+    //     return this.projection([d.x, d.y])[0]-7;
+    //   })
+    //   .attr('y', (d: any) => {
+    //     return this.projection([d.x, d.y])[1]-7;
+    //   })
+    //   .attr("id", (d: any) => {
+    //     return d.id
+    //   });
 
-    const smallNodes = this.g.selectAll('.node')
+    this.g.nodes.selectAll('.node')
       .data(this.nodes)
       .enter()
-      .filter((d: any) => {
-        return d.size < 50
-      })
       .append('circle')
       .classed('node', true)
-      .attr('r', 3)
-      .attr("stroke", '#000')
+      .attr('r', (d: any) => {
+        if (d.size < 50) return 6
+        if (d.size >= 50 && d.size < 100) return 9
+        return 12
+      })
+      .attr("stroke", (d: any) => {
+        if (d.size < 50) return '#ff9c00'
+        if (d.size >= 50 && d.size < 100) return '#a2ff00'
+        return '#009dff'
+      })
       .attr("fill", 'rgba(0,0,0,0.15)')
       .attr('cx', (d: any) => {
         return this.projection([d.x, d.y])[0];
@@ -163,8 +174,6 @@ export class AppComponent implements OnInit{
       .attr("id", (d: any) => {
         return d.id
       });
-
-    this.graphicalNodes.push(smallNodes, middleNodes, largeNodes);
   }
 
   drawEdges(){
@@ -175,7 +184,7 @@ export class AppComponent implements OnInit{
       .x((node: any) => this.projection([node.x, node.y])[0])
       .y((node: any) => this.projection([node.x, node.y])[1]);
 
-    let links = this.g.selectAll(".edge")
+    let links = this.g.edges.selectAll(".edge")
       .data(bundle.paths)
       .enter()
       .append("path")
@@ -191,6 +200,7 @@ export class AppComponent implements OnInit{
       .alphaDecay(0.1)
       .force("charge", d3.forceManyBody()
         .strength(10)
+        .distanceMax(scales.airports.range()[1] * 2)
       )
       .force("link", d3.forceLink()
         .strength(0.7)
@@ -202,31 +212,18 @@ export class AppComponent implements OnInit{
       .on("end", () => {
         console.log("layout complete");
       });
-
-    // @ts-ignore
-    layout.nodes(bundle.nodes).force("link").links(bundle.links);
-
-    // const fbundling = ForceEdgeBundling().nodes(this.nodes).edges(this.edges);
-    // const results = fbundling();
-    //
-    // let line = d3.line()
-    //   .curve(d3.curveBundle)
-    //   .x((node: any) => this.projection([node.x, node.y])[0])
-    //   .y((node: any) => this.projection([node.x, node.y])[1]);
-    //
-    // for (const res of results)
-    // this.g.append("path")
-    //   .attr("d", line(res))
-    //   .style("stroke-width", 2)
-    //   .style("stroke", "#ff2222")
-    //   .style("fill", "none")
-    //   .style('stroke-opacity', 0.05);
   }
 
   private zoomed(event: any) {
     const {transform} = event;
-    this.g.attr("transform", transform);
-    this.g.attr("stroke-width", 1 / transform.k);
+    this.g.basemap.attr("transform", transform);
+    this.g.basemap.attr("stroke-width", 1 / transform.k);
+    this.g.nodes.attr("transform", transform);
+    this.g.nodes.attr("stroke-width", 1 / transform.k);
+    this.g.edges.attr("transform", transform);
+    this.g.edges.attr("stroke-width", 1 / transform.k);
+    this.g.voronoi.attr("transform", transform);
+    this.g.voronoi.attr("stroke-width", 1 / transform.k);
   }
 
   private tooltip() {
@@ -252,7 +249,7 @@ export class AppComponent implements OnInit{
   private drawVoronoi() {
     const polygons = voronoi.geoVoronoi().polygons(this.geoJson);
 
-    this.voronoiDiagram = this.g.selectAll("path")
+    this.voronoiDiagram = this.g.voronoi.selectAll("path")
       .data(polygons.features)
       .enter()
       .append("path")
@@ -293,7 +290,7 @@ export class AppComponent implements OnInit{
   private handleMouseOverInteraction(nodeId: number, event: any, mouseIn: boolean = true) {
     const polygon = event.target
 
-    this.g.selectAll(".node")
+    this.g.nodes.selectAll(".node")
       .filter((node: any) => node.id == nodeId)
       .classed("highlighted", mouseIn);
 
@@ -311,7 +308,7 @@ export class AppComponent implements OnInit{
   }
 
   public filterAirports (min: number, max: number) {
-    d3.selectAll(".node")
+    this.g.nodes.selectAll(".node")
       .data(this.nodes)
       .classed('invisible', (d:any) => {
         return d.size > max || d.size < min

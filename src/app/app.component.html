@@ -3,4 +3,10 @@
   <input type="checkbox" (change)="toggleDisplayVoronoi()"/>
 </form>
 <slider></slider>
-<div id="map"></div>
+<svg width="960" height="600">
+  <!-- must be in this order for drawing -->
+  <g id="basemap"></g>
+  <g id="edges"></g>
+  <g id="nodes"></g>
+  <g id="voronoi"></g>
+</svg>

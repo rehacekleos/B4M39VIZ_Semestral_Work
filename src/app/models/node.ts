@@ -3,7 +3,7 @@ export class GraphNode{
   x: number
   y: number
   name: string
-  size?: number
+  size: number
   departure?: number
   arrive?: number
 }
