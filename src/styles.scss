@@ -43,8 +43,7 @@ body {
 
 .controls {
   position: relative;
-  //top: 4em;
-  //left: 8em;
+  margin: 1.5em 0;
 }
 
 .edge {
@@ -58,26 +57,26 @@ body {
   visibility: hidden;
 }
 
-slider .ngx-slider .ngx-slider-pointer{
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    top: -15px;
-    background-color: #696969;
-    z-index: 3;
-    border-radius: 16px;
+slider .ngx-slider .ngx-slider-pointer {
+  cursor: pointer;
+  width: 25px;
+  height: 25px;
+  top: -10px;
+  background-color: #696969;
+  z-index: 3;
+  border-radius: 16px;
 }
 
 
-slider .ngx-slider .ngx-slider-pointer:after{
-    content: '';
-    width: 12px;
-    height: 12px;
-    position: absolute;
-    top: 9px;
-    left: 9px;
-    border-radius: 15px;
-    background: #fff;
+slider .ngx-slider .ngx-slider-pointer:after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  border-radius: 15px;
+  background: #fff;
 }
 
 slider .ngx-slider .ngx-slider-selection{
@@ -90,12 +89,22 @@ slider .ngx-slider .ngx-slider-bubble{
     cursor: default;
     bottom: 20px;
     padding: 3px;
-    color: #55637d;
-    font-size: 16px;
+  color: #55637d;
+  font-size: 16px;
 }
 
 
 slider input {
-    padding: 0.3em;
-    margin: 0.5em;
+  padding: 0.3em;
+  margin: 0.5em;
+}
+
+slider .ngx-slider {
+  display: block;
+  width: 91%;
+  margin: 4em auto;
+}
+
+rect#border {
+  fill: #f1f1f1;
 }
