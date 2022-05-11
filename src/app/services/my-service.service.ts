@@ -10,12 +10,6 @@ export class MyServiceService {
 
   width = 900;
   height = 600;
-
-  MIN_X = Number.MAX_VALUE
-  MAX_X = -Number.MAX_VALUE
-  MIN_Y = Number.MAX_VALUE
-  MAX_Y = -Number.MAX_VALUE
-
   hypotenuse = Math.sqrt(this.width * this.width + this.height * this.height);
 
   constructor() {
@@ -55,7 +49,7 @@ export class MyServiceService {
     return edges;
   }
 
-  async getNodes(edges: GraphEdge[]){
+  async getNodes(edges: GraphEdge[], projection: any){
     let nodes: GraphNode[] = []
     const xml = await this.getXmlData();
     const xml_nodes = xml.documentElement.getElementsByTagName('node');
@@ -64,14 +58,13 @@ export class MyServiceService {
       const node = xml_nodes[i]
       const x = parseFloat(node.children[0].innerHTML)/10;
       const y = Math.abs(parseFloat(node.children[2].innerHTML))/10;
-      this.MIN_X = Math.min(this.MIN_X, x)
-      this.MAX_X = Math.max(this.MAX_X, x)
-      this.MIN_Y = Math.min(this.MIN_Y, y)
-      this.MAX_Y = Math.max(this.MAX_Y, y)
+      const cords = projection([x,y])
       nodes.push({
         id: node.getAttribute('id'),
-        x: x,
-        y: y,
+        longX: x,
+        latY: y,
+        x: cords[0],
+        y: cords[1],
         size: 0,
         name: node.children[1].innerHTML.split('(')[0].trim()
       });
@@ -88,7 +81,7 @@ export class MyServiceService {
     return nodes;
   }
 
-  public generateSegments(nodes: any, links: any) {
+  public generateSegments(nodes: any, links: any, projection: any) {
     let bundle: {nodes: any, links: any, paths: any} = {nodes: [], links: [], paths: []};
 
     bundle.nodes = nodes.map(function(d: any, i: any) {
@@ -105,6 +98,7 @@ export class MyServiceService {
       const segments = d3.scaleLinear()
         .domain([0, this.hypotenuse])
         .range([1, 10])
+
       let total = Math.round(segments(length));
 
       let xscale = d3.scaleLinear()

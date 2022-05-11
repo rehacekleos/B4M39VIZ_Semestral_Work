@@ -31,7 +31,7 @@ export class AppComponent implements OnInit{
   map: any;
   projection: any
   geoJson: any
-  tooltipContainer: any
+  tooltip: any
   voronoiDiagram: any
   graphicalNodes: any = []
 
@@ -53,9 +53,11 @@ export class AppComponent implements OnInit{
       voronoi:  this.svg.select("g#voronoi")
     };
 
+    this.tooltip = d3.select("text#tooltip");
+
     this.projection = d3.geoAlbers().scale(1280).translate([480, 300]);
     this.edges = await this.myService.getEdges();
-    this.nodes = await this.myService.getNodes(this.edges);
+    this.nodes = await this.myService.getNodes(this.edges, this.projection);
     this.edges = this.edges.filter(edge => this.nodes.findIndex(n => n.id == edge.source || n.id == edge.target) !== -1)
     this.map = await this.myService.getUSMap();
 
@@ -105,84 +107,43 @@ export class AppComponent implements OnInit{
   }
 
   private drawNodes() {
-    const triangle = d3.symbol()
-      .type(d3.symbolTriangle)
-      .size(60);
-
-    // const middleNodes = this.g.nodes.selectAll('.node')
-    //   .data(this.nodes)
-    //   .enter()
-    //   .filter((d: any) => {
-    //     return d.size >= 50 && d.size < 100
-    //   })
-    //   .append("path")
-    //   .attr("d", triangle)
-    //   .attr("stroke", '#00309a')
-    //   .attr("fill", 'rgba(0,48,154,0.15)')
-    //   .attr("transform", (d: any) => {
-    //     return "translate(" + this.projection([d.x, d.y])[0] + "," + this.projection([d.x, d.y])[1] + ")";
-    //   })
-    //   .classed("node", true)
-    //   .attr("id", (d: any) => {
-    //     return d.id
-    //   });
-    //
-    // const largeNodes = this.g.nodes.selectAll('.node')
-    //   .data(this.nodes)
-    //   .enter()
-    //   .filter((d: any) => {
-    //     return d.size >= 100
-    //   })
-    //   .append('rect')
-    //   .classed('node', true)
-    //   .attr("stroke", '#098300')
-    //   .attr("fill", 'rgba(9,131,0,0.15)')
-    //   .attr('width', 15)
-    //   .attr('height', 15)
-    //   .attr('x', (d: any) => {
-    //     return this.projection([d.x, d.y])[0]-7;
-    //   })
-    //   .attr('y', (d: any) => {
-    //     return this.projection([d.x, d.y])[1]-7;
-    //   })
-    //   .attr("id", (d: any) => {
-    //     return d.id
-    //   });
 
     this.g.nodes.selectAll('.node')
       .data(this.nodes)
       .enter()
       .append('circle')
       .classed('node', true)
-      .attr('r', (d: any) => {
+      .attr('r', (d: GraphNode) => {
         if (d.size < 50) return 6
         if (d.size >= 50 && d.size < 100) return 9
         return 12
       })
-      .attr("stroke", (d: any) => {
+      .attr("stroke", (d: GraphNode) => {
         if (d.size < 50) return '#ff9c00'
         if (d.size >= 50 && d.size < 100) return '#a2ff00'
         return '#009dff'
       })
       .attr("fill", 'rgba(0,0,0,0.15)')
-      .attr('cx', (d: any) => {
-        return this.projection([d.x, d.y])[0];
+      .attr('cx', (d: GraphNode) => {
+        return d.x;
       })
-      .attr('cy', (d: any) => {
-        return this.projection([d.x, d.y])[1];
+      .attr('cy', (d: GraphNode) => {
+        return d.y;
       })
-      .attr("id", (d: any) => {
+      .attr("id", (d: GraphNode) => {
         return d.id
       });
   }
 
   drawEdges(){
-    const bundle = this.myService.generateSegments(this.nodes, this.edges);
+    const bundle = this.myService.generateSegments(this.nodes, this.edges, this.projection);
+
+    console.log(bundle)
 
     let line = d3.line()
       .curve(d3.curveBundle)
-      .x((node: any) => this.projection([node.x, node.y])[0])
-      .y((node: any) => this.projection([node.x, node.y])[1]);
+      .x((node: any) => node.x)
+      .y((node: any) => node.y);
 
     let links = this.g.edges.selectAll(".edge")
       .data(bundle.paths)
@@ -212,6 +173,10 @@ export class AppComponent implements OnInit{
       .on("end", () => {
         console.log("layout complete");
       });
+
+
+      // @ts-ignore
+    // layout.nodes(bundle.nodes).force("link").links(bundle.links);
   }
 
   private zoomed(event: any) {
@@ -226,13 +191,6 @@ export class AppComponent implements OnInit{
     this.g.voronoi.attr("stroke-width", 1 / transform.k);
   }
 
-  private tooltip() {
-    this.tooltipContainer = d3.select("#map")
-      .append("div")
-      .classed('tooltip', true);
-  }
-
-
   private mapNodesToGeoJson() {
     this.geoJson = this.nodes.map((node) => {
       return {
@@ -240,7 +198,7 @@ export class AppComponent implements OnInit{
         properties: node,
         geometry: {
           type: "Point",
-          coordinates: [node.x, node.y]
+          coordinates: [node.longX, node.latY]
         }
       };
     });
@@ -265,7 +223,7 @@ export class AppComponent implements OnInit{
            Departures: ${nodeData.departure}<br>
            Arrivals: ${nodeData.arrive}`;
 
-        this.tooltipContainer
+        this.tooltip
           .html(text)
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
@@ -274,14 +232,14 @@ export class AppComponent implements OnInit{
         this.handleMouseOverInteraction(id, event)
       })
       .on("mousemove", (event: any) => {
-        this.tooltipContainer
+        this.tooltip
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
           .style("visibility", "visible")
       })
       .on("mouseout", (event: any) => {
         const id = event.path[0].__data__.properties.site.properties.id;
-        this.tooltipContainer.style("visibility", "hidden");
+        this.tooltip.style("visibility", "hidden");
 
         this.handleMouseOverInteraction(id, event, false)
       });
@@ -292,6 +250,11 @@ export class AppComponent implements OnInit{
 
     this.g.nodes.selectAll(".node")
       .filter((node: any) => node.id == nodeId)
+      .classed("highlighted", mouseIn);
+
+    this.g.edges.selectAll(".edge")
+      .filter((edge: any[]) => {
+        return edge[0].id == nodeId || edge[edge.length-1].id == nodeId})
       .classed("highlighted", mouseIn);
 
     if (this.displayVoronoi) {

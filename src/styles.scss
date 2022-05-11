@@ -29,14 +29,16 @@ body {
   font-size: 0.8em;
   color: white;
   padding: 10px;
+  z-index: 1000;
   visibility: hidden;
   border-radius: 10px;
   background: rgba(44, 44, 44, 0.49);
 }
 
 .highlighted {
-  stroke-width: 2;
-  stroke: #fd0000;
+  stroke-width: 2px !important;
+  stroke: #fd0000 !important;
+  stroke-opacity: 0.5 !important;
 }
 
 .controls {
