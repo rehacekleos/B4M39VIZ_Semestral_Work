@@ -6,6 +6,11 @@ body {
   font-family: sans-serif;
 }
 
+.center {
+  display: block;
+  margin: auto;
+}
+
 .land {
   fill: #dddddd;
 }
@@ -43,7 +48,7 @@ body {
 
 .controls {
   position: relative;
-  margin: 1.5em 0;
+  margin: 3em 6em 1.5em 17em;
 }
 
 .edge {
@@ -101,10 +106,14 @@ slider input {
 
 slider .ngx-slider {
   display: block;
-  width: 91%;
+  width: 68%;
   margin: 4em auto;
 }
 
 rect#border {
   fill: #f1f1f1;
+}
+
+slider p {
+  margin: 1em 17em;
 }
