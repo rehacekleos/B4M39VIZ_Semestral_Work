@@ -76,6 +76,13 @@ export class AppComponent implements OnInit{
 
 
     this.svg.call(zoom);
+
+    this.svg.append("circle").attr("cx",20).attr("cy",530).attr("r", 6).style("fill", 'rgba(0,0,0,0.15)').style("stroke", '#ff9c00')
+    this.svg.append("circle").attr("cx",20).attr("cy",552).attr("r", 9).style("fill", 'rgba(0,0,0,0.15)').style("stroke", '#a2ff00')
+    this.svg.append("circle").attr("cx",20).attr("cy",580).attr("r", 12).style("fill", 'rgba(0,0,0,0.15)').style("stroke", '#009dff')
+    this.svg.append("text").attr("x", 40).attr("y", 532).text("Small airport (< 50)").style("font-size", "15px").attr("alignment-baseline","middle")
+    this.svg.append("text").attr("x", 40).attr("y", 554).text("Medium airport (50 - 100)").style("font-size", "15px").attr("alignment-baseline","middle")
+    this.svg.append("text").attr("x", 40).attr("y", 582).text("Large airport (> 100)").style("font-size", "15px").attr("alignment-baseline","middle")
   }
 
   private async drawUSMap(){
@@ -133,8 +140,6 @@ export class AppComponent implements OnInit{
 
   drawEdges(){
     const bundle = this.myService.generateSegments(this.nodes, this.edges, this.projection);
-
-    console.log(bundle)
 
     let line = d3.line()
       .curve(d3.curveBundle)
