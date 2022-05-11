@@ -175,8 +175,8 @@ export class AppComponent implements OnInit{
       });
 
 
-      // @ts-ignore
-    // layout.nodes(bundle.nodes).force("link").links(bundle.links);
+    // @ts-ignore
+    layout.nodes(bundle.nodes).force("link").links(bundle.links);
   }
 
   private zoomed(event: any) {
@@ -276,6 +276,11 @@ export class AppComponent implements OnInit{
       .classed('invisible', (d:any) => {
         return d.size > max || d.size < min
       });
+
+    this.g.edges.selectAll(".edge")
+      .classed('invisible', (edge: any) => {
+        return edge[0].size > max || edge[0].size < min ||edge[edge.length-1].size > max || edge[edge.length-1].size < min
+      })
   }
 
 }
