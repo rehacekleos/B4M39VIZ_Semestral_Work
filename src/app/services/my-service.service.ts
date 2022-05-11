@@ -67,11 +67,13 @@ export class MyServiceService {
       });
     }
 
+    let max_size = 0
     for (let node of nodes){
       node.size = edges.filter(e => e.source == node.id || e.target == node.id).length
       node.departure = edges.filter(e => e.source == node.id).length
       node.arrive = edges.filter(e => e.target == node.id).length
     }
+    console.log(max_size)
     return nodes;
   }
 

@@ -14,10 +14,10 @@ export class SliderComponent {
   }
 
   minValue: number = 0;
-  maxValue: number = 129;
+  maxValue: number = 258;
   options: Options = {
     floor: 0,
-    ceil: 129
+    ceil: 258
   };
 
   public onSliderChanged(min: number, max: number) {

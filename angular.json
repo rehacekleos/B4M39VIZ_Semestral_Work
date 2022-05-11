@@ -33,7 +33,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/d3-ForceEdgeBundling.js"
+            ]
           },
           "configurations": {
             "production": {

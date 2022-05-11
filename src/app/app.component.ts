@@ -8,6 +8,8 @@ import {GraphNode} from "./models/node";
 import {GraphEdge} from "./models/edge";
 import {MyServiceService} from "./services/my-service.service";
 
+declare var ForceEdgeBundling: any;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -17,6 +19,7 @@ export class AppComponent implements OnInit{
 
   width = 900;
   height = 600;
+  hypotenuse = Math.sqrt(this.width * this.width + this.height * this.height);
 
   nodes: GraphNode[] = []
   edges: GraphEdge[] = []
@@ -56,8 +59,7 @@ export class AppComponent implements OnInit{
 
     await this.drawUSMap();
     this.drawNodes();
-
-    this.edgeBundling()
+    this.drawEdges();
 
     this.mapNodesToGeoJson();
 
@@ -92,7 +94,7 @@ export class AppComponent implements OnInit{
       .attr("d", path);
   }
 
-  private drawNodes(){
+  private drawNodes() {
     const triangle = d3.symbol()
       .type(d3.symbolTriangle)
       .size(60)
@@ -118,7 +120,9 @@ export class AppComponent implements OnInit{
     const largeNodes = this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
-      .filter((d: any) => {return d.size >= 100})
+      .filter((d: any) => {
+        return d.size >= 100
+      })
       .append('rect')
       .classed('node', true)
       .attr("stroke", '#098300')
@@ -138,7 +142,9 @@ export class AppComponent implements OnInit{
     const smallNodes = this.g.selectAll('.node')
       .data(this.nodes)
       .enter()
-      .filter((d: any) => {return d.size < 50})
+      .filter((d: any) => {
+        return d.size < 50
+      })
       .append('circle')
       .classed('node', true)
       .attr('r', 3)
@@ -155,7 +161,24 @@ export class AppComponent implements OnInit{
       });
 
     this.graphicalNodes.push(smallNodes, middleNodes, largeNodes);
-    console.log(this.graphicalNodes);
+  }
+
+  drawEdges(){
+    // const fbundling = ForceEdgeBundling().nodes(this.nodes).edges(this.edges);
+    // const results = fbundling();
+    //
+    // let line = d3.line()
+    //   .curve(d3.curveBundle)
+    //   .x((node: any) => this.projection([node.x, node.y])[0])
+    //   .y((node: any) => this.projection([node.x, node.y])[1]);
+    //
+    // for (const res of results)
+    // this.g.append("path")
+    //   .attr("d", line(res))
+    //   .style("stroke-width", 2)
+    //   .style("stroke", "#ff2222")
+    //   .style("fill", "none")
+    //   .style('stroke-opacity', 0.05);
   }
 
   private zoomed(event: any) {
@@ -164,16 +187,10 @@ export class AppComponent implements OnInit{
     this.g.attr("stroke-width", 1 / transform.k);
   }
 
-  private edgeBundling() {
-
-  }
-
   private tooltip() {
     this.tooltipContainer = d3.select("#map")
       .append("div")
       .classed('tooltip', true);
-
-    this.tooltipContainer.append("text");
   }
 
 
@@ -205,12 +222,12 @@ export class AppComponent implements OnInit{
         const nodeData = this.nodes[id];
 
         const text =
-          `Code: ${nodeData.name}
-           Departures: ${nodeData.departure}
+          `Code: ${nodeData.name}<br>
+           Departures: ${nodeData.departure}<br>
            Arrivals: ${nodeData.arrive}`;
 
         this.tooltipContainer
-          .text(text)
+          .html(text)
           .style("top", (event.pageY - 35) + "px")
           .style("left", (event.pageX + 10) + "px")
           .style("visibility", "visible");
@@ -234,8 +251,8 @@ export class AppComponent implements OnInit{
   private handleMouseOverInteraction(nodeId: number, event: any, mouseIn: boolean = true) {
     const polygon = event.target
 
-    const node = d3.selectAll(".node")
-      .filter((node: any) => {return node.id == nodeId})
+    this.g.selectAll(".node")
+      .filter((node: any) => node.id == nodeId)
       .classed("highlighted", mouseIn);
 
     if (this.displayVoronoi) {
@@ -253,37 +270,10 @@ export class AppComponent implements OnInit{
 
   public filterAirports (min: number, max: number) {
     this.g.selectAll(".node")
-      .classed('invisible', (d:any) => d.size > max || d.size < min);
-
-    //   this.graphicalNodes.forEach((selection: any) => {
-    //   const nodesGroup = selection._groups[0]
-    //     .forEach((nd: any) => {
-    //       console.log("nd", nd)
-    //       // const id = this.nodes[id]
-    //       // @ts-ignore
-    //       if (this.nodes[nd.id].size > max || this.nodes[nd.id].size < min){
-    //         nd.addAttribute("class", "invisible")
-    //       }
-    //     })
-    //     .attr('invisible', (d:any) => {
-    //       console.log("d", d)
-    //       return d.size > max || d.size < min
-    //     });
-    // })
-    // .forEach((selection: any) => {
-    // const nodesGroup = selection._groups[0];
-        //   nodesGroup.classed('invisible', (d:any) => d.size > max || d.size < min);
-      // }).classed('invisible', (d:any) => d.size > max || d.size < min);
-      // .each((node: any) => console.log(node))
-      // .classed('invisible', (d:any) => d.size > max || d.size < min);
-
-    // return nodesGroup.filter((d: any) => {return d.size <= max && d.size >= min})
-
-    // this.g.selectAll('.node')
-    //   .filter((d: any) => {return d.size <= max && d.size >= min})
-
-
-    console.log("hovno", min, max)
+      .data(this.nodes)
+      .classed('invisible', (d:any) => {
+        return d.size > max || d.size < min
+      });
   }
 
   private hideAirports() {
