@@ -7,6 +7,7 @@ import {HttpClient} from "@angular/common/http";
 import {GraphNode} from "./models/node";
 import {GraphEdge} from "./models/edge";
 import {MyServiceService} from "./services/my-service.service";
+import {Simulation} from "d3";
 
 declare var ForceEdgeBundling: any;
 
@@ -17,9 +18,8 @@ declare var ForceEdgeBundling: any;
 })
 export class AppComponent implements OnInit{
 
-  width = 900;
-  height = 600;
-  hypotenuse = Math.sqrt(this.width * this.width + this.height * this.height);
+  width;
+  height;
 
   nodes: GraphNode[] = []
   edges: GraphEdge[] = []
@@ -36,6 +36,8 @@ export class AppComponent implements OnInit{
   graphicalNodes: any = []
 
   constructor(private myService: MyServiceService) {
+    this.width = this.myService.width;
+    this.height = this.myService.height;
   }
 
 
@@ -58,8 +60,10 @@ export class AppComponent implements OnInit{
     this.g.attr('transform', 'translate(20, 20)')
 
     await this.drawUSMap();
+
     this.drawNodes();
     this.drawEdges();
+
 
     this.mapNodesToGeoJson();
 
@@ -130,10 +134,10 @@ export class AppComponent implements OnInit{
       .attr('width', 15)
       .attr('height', 15)
       .attr('x', (d: any) => {
-        return this.projection([d.x, d.y])[0];
+        return this.projection([d.x, d.y])[0]-7;
       })
       .attr('y', (d: any) => {
-        return this.projection([d.x, d.y])[1];
+        return this.projection([d.x, d.y])[1]-7;
       })
       .attr("id", (d: any) => {
         return d.id
@@ -164,6 +168,44 @@ export class AppComponent implements OnInit{
   }
 
   drawEdges(){
+    const bundle = this.myService.generateSegments(this.nodes, this.edges);
+
+    let line = d3.line()
+      .curve(d3.curveBundle)
+      .x((node: any) => this.projection([node.x, node.y])[0])
+      .y((node: any) => this.projection([node.x, node.y])[1]);
+
+    let links = this.g.selectAll(".edge")
+      .data(bundle.paths)
+      .enter()
+      .append("path")
+      .attr("d", line)
+      .attr("class", "edge")
+
+    const scales = {
+      airports: d3.scaleSqrt()
+        .range([4, 18]),
+    }
+
+    let layout = d3.forceSimulation()
+      .alphaDecay(0.1)
+      .force("charge", d3.forceManyBody()
+        .strength(10)
+      )
+      .force("link", d3.forceLink()
+        .strength(0.7)
+        .distance(0)
+      )
+      .on("tick", () => {
+        links.attr("d", line);
+      })
+      .on("end", () => {
+        console.log("layout complete");
+      });
+
+    // @ts-ignore
+    layout.nodes(bundle.nodes).force("link").links(bundle.links);
+
     // const fbundling = ForceEdgeBundling().nodes(this.nodes).edges(this.edges);
     // const results = fbundling();
     //
@@ -269,15 +311,11 @@ export class AppComponent implements OnInit{
   }
 
   public filterAirports (min: number, max: number) {
-    this.g.selectAll(".node")
+    d3.selectAll(".node")
       .data(this.nodes)
       .classed('invisible', (d:any) => {
         return d.size > max || d.size < min
       });
-  }
-
-  private hideAirports() {
-
   }
 
 }

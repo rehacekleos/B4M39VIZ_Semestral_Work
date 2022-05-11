@@ -8,10 +8,15 @@ import {GraphNode} from "../models/node";
 })
 export class MyServiceService {
 
+  width = 900;
+  height = 600;
+
   MIN_X = Number.MAX_VALUE
   MAX_X = -Number.MAX_VALUE
   MIN_Y = Number.MAX_VALUE
   MAX_Y = -Number.MAX_VALUE
+
+  hypotenuse = Math.sqrt(this.width * this.width + this.height * this.height);
 
   constructor() {
 
@@ -75,6 +80,75 @@ export class MyServiceService {
     }
     console.log(max_size)
     return nodes;
+  }
+
+  public generateSegments(nodes: any, links: any) {
+    let bundle: {nodes: any, links: any, paths: any} = {nodes: [], links: [], paths: []};
+
+    bundle.nodes = nodes.map(function(d: any, i: any) {
+      d.fx = d.x;
+      d.fy = d.y;
+      return d;
+    });
+
+    links.forEach((d: any, i: any) => {
+      const sourceNode = nodes.find((n: any) => n.id == d.source)
+      const targetNode = nodes.find((n: any) => n.id == d.target)
+      let length = this.distance(sourceNode, targetNode);
+
+      const segments = d3.scaleLinear()
+        .domain([0, this.hypotenuse])
+        .range([1, 10])
+      let total = Math.round(segments(length));
+
+      let xscale = d3.scaleLinear()
+        .domain([0, total + 1])
+        .range([sourceNode.x, targetNode.x]);
+
+      let yscale = d3.scaleLinear()
+        .domain([0, total + 1])
+        .range([sourceNode.y, targetNode.y]);
+
+      let source = sourceNode;
+      let target = null;
+
+      let local = [source];
+
+      for (let j = 1; j <= total; j++) {
+        target = {
+          x: xscale(j),
+          y: yscale(j)
+        };
+
+        local.push(target);
+        bundle.nodes.push(target);
+
+        bundle.links.push({
+          source: source,
+          target: target
+        });
+
+        source = target;
+      }
+
+      local.push(targetNode);
+
+      bundle.links.push({
+        source: target,
+        target: targetNode
+      });
+
+      bundle.paths.push(local);
+    });
+
+    return bundle;
+  }
+
+  private distance(source: any, target: any) {
+    const dx2 = Math.pow(target.x - source.x, 2);
+    const dy2 = Math.pow(target.y - source.y, 2);
+
+    return Math.sqrt(dx2 + dy2);
   }
 
 
